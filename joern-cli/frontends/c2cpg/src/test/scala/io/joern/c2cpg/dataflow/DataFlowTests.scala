@@ -2171,4 +2171,28 @@ class DataFlowTestsWithCallDepth extends DataFlowCodeToCpgSuite {
       )
     }
   }
+
+  "DataFlowTest81" should {
+    val cpg = code(
+      """
+        |int a = 10;
+        |int b = 20;
+        |int c = 30;
+        |
+        |void foo() {
+        |  bar(a, b, c);
+        |}
+        |""".stripMargin)
+
+    "elements at top-level statements should flow to calls in functions" in {
+      val x = cpg.literal("10")
+      val y = cpg.literal("20")
+      val z = cpg.literal("30")
+      cpg.call("bar").argument.reachableByFlows(x ++ y ++ z).map(flowToResultPairs).toSetMutable shouldBe Set(
+        List(("a = 10", 2), ("bar(a, b, c)", 7)),
+        List(("c = 30", 4), ("bar(a, b, c)", 7)),
+        List(("b = 20", 3), ("bar(a, b, c)", 7))
+      )
+    }
+  }
 }
